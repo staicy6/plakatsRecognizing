@@ -15,7 +15,7 @@
 
 @implementation ViewController
 
-@synthesize imageView, takePhotoBtn, choosePhotoBtn, nnewImage, analyzeButton, calendarButton, store, ourEvent, ourCalendar, monthArray, monthName, dayName, mmonthName, timeArray, amountOfHours, hoursAm, resu, titlestring;
+@synthesize imageView, takePhotoBtn, choosePhotoBtn, nnewImage, analyzeButton, calendarButton, store, ourEvent, ourCalendar, monthArray, monthName, dayName, mmonthName;
 
 // Working with camera
 
@@ -90,58 +90,15 @@
 //    if ([self imageFunc:nnewImage  isEqualTo:oloImage])
 //        NSLog(@"RABOTAET");
 //    UIImage *imageToDisplay =[UIImage imageWithCGImage:[nnewImage CGImage] scale:1.0 orientation: UIImageOrientationUp];
-    [tesseract setImage:[UIImage imageNamed:@"image_sample.jpg"]];
-    imageView.image = [UIImage imageNamed:@"image_sample.jpg"];
-//    [tesseract setImage:nnewImage];
+    [tesseract setImage:nnewImage];
     [tesseract recognize];
      NSLog(@"%@", [tesseract recognizedText]);
     [self writeResultToFile:[tesseract recognizedText]];
     NSString *resultString = [[NSString alloc] init];
     resultString = [self readStringFromFile:@"myTextFile.txt"];
     [self takeDateFromTxt:resultString];
-    UIAlertView *alertDate = [[UIAlertView alloc]
-                          initWithTitle:@"Date of event"
-                              message:[NSString stringWithFormat:@"%@%@%d%@", monthName, @" ", dayName, @", 2013"]
-                          delegate:nil
-                          cancelButtonTitle:@"Okay"
-                          otherButtonTitles:nil];
-
-    [self takeTimeFromTxt:resultString];
-    
-    UIAlertView *alertTime = [[UIAlertView alloc]
-                              initWithTitle:@"Time of the beggining"
-                              message:[NSString stringWithFormat:@"%@%@", hoursAm[0], @" pm"]
-                              delegate:nil
-                              cancelButtonTitle:@"Okay"
-                              otherButtonTitles:nil];
-
-
-    [tesseract setImage:[UIImage imageNamed:@"image_sample_resized.jpg"]];
-    [tesseract recognize];
-    NSLog(@"%@", [tesseract recognizedText]);
-    [self writeResultToFile:[tesseract recognizedText]];
-    NSString *resultStringResized = [[NSString alloc] init];
-    resultStringResized = [self readStringFromFile:@"myTextFile.txt"];
-    [self findTitle:resultString :resultStringResized];
-    
-    UIAlertView *alertTitle = [[UIAlertView alloc]
-                              initWithTitle:@"Event name"
-                              message:[NSString stringWithFormat:@"%@", titlestring]
-                              delegate:nil
-                              cancelButtonTitle:@"Okay"
-                              otherButtonTitles:nil];
-    [alertTitle show];
-    
-    [alertTime show];
-
-    
-    
-    [alertDate show];
-
-
-    
-//    NSLog(@"%@", mmonthName);
-//    NSLog (@"%d", dayName);
+    NSLog(@"%@", mmonthName);
+    NSLog (@"%d", dayName);
 //    NSString * kirpich = [[NSString alloc] init];
 //    kirpich =[self readStringFromFile:@"myTextFile.txt"];
 //    NSLog(@"%@", kirpich);
@@ -275,114 +232,6 @@
         }
     }
 }
-
--(void)takeTimeFromTxt: (NSString*) str
-{
-    hoursAm = [[NSMutableArray alloc] initWithCapacity:30];
-    timeArray = @[@"pm", @"am", @"p.m.", @"a.m."];
-    NSArray* foo = [str componentsSeparatedByString: @" "];
-    for (NSString * str1 in foo)
-    {
-        for (NSString *subStr in timeArray)
-        {
-            NSRange result = [str1 rangeOfString:subStr];
-            if(result.location != NSNotFound) //{NSLog(@"Yes, it is substring");}
-            {
-                for (int i=0; i<[str1 length]; i++)
-                    if ([str1 characterAtIndex:i] == 'p' || [str1 characterAtIndex:i] == 'a')
-                    {
-                        if ([str1 characterAtIndex:i+1] == 'm')
-                        {
-                            if ((i+2)!=[str1 length])
-                            {
-                            if ((int)[str1 characterAtIndex:i+2]<48 || ((int)[str1 characterAtIndex:i+2]>57 && (int)[str1 characterAtIndex:i+2]<97) || (int)[str1 characterAtIndex:i+2]>122)
-                            {
-                                NSUInteger pos = [str1 rangeOfCharacterFromSet:[NSCharacterSet decimalDigitCharacterSet]].location;
-                                amountOfHours += ((int)[str1 characterAtIndex:pos] - 48);
-                                pos+=1;
-                                if ((int)[str1 characterAtIndex:pos] >= 48 && (int)[str1 characterAtIndex:pos]<=57 )
-                                {
-                                    NSUInteger hours = amountOfHours*10;
-                                    amountOfHours = hours + ((int)[str1 characterAtIndex:pos] - 48);
-                                }
-                                NSNumber* xWrapped = [NSNumber numberWithInt:amountOfHours];
-                                [hoursAm addObject:xWrapped];
-                            }
-                            else if ([str1 characterAtIndex:i+1] == '.')
-                                if ([str1 characterAtIndex:i+1] == 'm')
-                                    NSLog(@"OLOLO");
-                            }
-                            else
-                            {
-                                NSUInteger pos = [str1 rangeOfCharacterFromSet:[NSCharacterSet decimalDigitCharacterSet]].location;
-                                if (pos>=0 && pos< [str1 length])
-                                {
-                                    amountOfHours += ((int)[str1 characterAtIndex:pos] - 48);
-                                    pos+=1;
-                                    if ((int)[str1 characterAtIndex:pos] >= 48 && (int)[str1 characterAtIndex:pos]<=57 )
-                                    {
-                                        NSUInteger hours = amountOfHours*10;
-                                        amountOfHours = hours + ((int)[str1 characterAtIndex:pos] - 48);
-                                    }
-                                    NSNumber* xWrapped = [NSNumber numberWithInt:amountOfHours];
-                                    [hoursAm addObject:xWrapped];
-                                    break;
-                                }
-
-                            }
-                        }
-                        
-                    }
-
-            }
-        }
-    }
-    NSLog(@"%@", hoursAm[0]);
-}
-
-
-
-- (void)findTitle:(NSString*)original :(NSString*)resized
-{
-    NSUInteger numberOfEl;
-    NSArray* originalArr = [original componentsSeparatedByString: @" "];
-    NSArray* resizedArr = [resized componentsSeparatedByString:@" "];
-    NSCharacterSet *charactersToRemove =
-    [[ NSCharacterSet alphanumericCharacterSet ] invertedSet ];
-    resu = [[NSMutableArray alloc] initWithCapacity:30];
-    for (NSString* strRes in resizedArr)
-    {
-        NSString *trimmedRes = [[ strRes componentsSeparatedByCharactersInSet:charactersToRemove ]
-                                componentsJoinedByString:@""];
-        NSString *strNewRes = [trimmedRes stringByReplacingOccurrencesOfString:@"\n" withString:@""];
-        for (NSString* strOr in originalArr)
-        {
-            NSString *trimmedOrig = [[ strOr componentsSeparatedByCharactersInSet:charactersToRemove ]
-                                     componentsJoinedByString:@""];
-            NSString *strNewOrig = [trimmedOrig stringByReplacingOccurrencesOfString:@"\n" withString:@""];
-            //NSLog(@"%@%@%@", strNewOrig, @" ", strNewRes);
-            if ([strNewRes isEqualToString: strNewOrig] && ![strNewRes isEqual: @""] && ![strNewOrig isEqual: @""])
-            {
-                numberOfEl = [originalArr indexOfObject: strOr];
-                NSNumber *xWrapped = [NSNumber numberWithInt:numberOfEl];
-                //NSLog(@"%@",xWrapped);
-                [resu addObject:xWrapped];
-                //NSLog(@"%@", [resu lastObject]);
-                // NSLog(@"%@", originalArr[numberOfEl]);
-                // break;
-            }
-        }
-    }
-    
-    //[NSString stringWithFormat:@"%@%@%@", originalArr[numberOfEl], originalArr[numberOfEl+1], originalArr[numberOfEl+2]];
-    int t = [resu[0] intValue];
-    //NSLog(@"%d", t);
-    
-    titlestring = [NSString stringWithFormat:@"%@%@%@%@%@", originalArr[t], @" ", originalArr[t+1], @" ", originalArr[t+2]];
-    NSLog(@"%@%@%@%@%@", originalArr[t], @" ", originalArr[t+1], @" ", originalArr[t+2]);
-}
-
-
 
 - (void)viewDidLoad
 {
