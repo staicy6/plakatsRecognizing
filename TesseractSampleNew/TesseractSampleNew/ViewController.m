@@ -18,7 +18,6 @@
 @synthesize imageView, takePhotoBtn, choosePhotoBtn, nnewImage, analyzeButton, calendarButton, store, ourEvent, ourCalendar, monthArray, monthName, dayName, mmonthName, timeArray, amountOfHours, hoursAm, resu, titlestring;
 
 // Working with camera
-
 -(IBAction) getPhoto:(id) sender {
 	UIImagePickerController * picker = [[UIImagePickerController alloc] init];
 	picker.delegate = self;
@@ -34,13 +33,12 @@
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
 	[picker dismissViewControllerAnimated:YES completion:^{NSLog(@"ololo");}];
 	nnewImage = [info objectForKey:@"UIImagePickerControllerOriginalImage"];
-    NSLog(@"%f%@%f", nnewImage.size.height, @" ", nnewImage.size.width);
+    //NSLog(@"%f%@%f", nnewImage.size.height, @" ", nnewImage.size.width);
     imageView.image = nnewImage;
 //    [tesseract setImage:nnewImage];
 }
 
 // Reading something from txt file
-
 - (NSString *)readStringFromFile:(NSString*) nameOfFile{
     
     // Build the path...
@@ -52,7 +50,6 @@
 }
 
 // Button analyze - recognize text from file and writes it to file
-
 - (BOOL)imageFunc:(UIImage *)image1 isEqualTo:(UIImage *)image2
 {
     NSData *data1 = UIImagePNGRepresentation(image1);
@@ -61,19 +58,21 @@
     return [data1 isEqual:data2];
 }
 
+//Saves NSData to jpg
 -(void) saveToJpg:(UIImage *)image1
 {
     NSString *docDir = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
     
 	// If you go to the folder below, you will find those pictures
-	NSLog(@"%@",docDir);
+	//NSLog(@"%@",docDir);
     
-	NSLog(@"saving jpeg");
+	//NSLog(@"saving jpeg");
 	NSString *jpegFilePath = [NSString stringWithFormat:@"%@/test.jpeg",docDir];
 	NSData *data2 = [NSData dataWithData:UIImageJPEGRepresentation(image1, 1.0f)];//1.0f = 100% quality
 	[data2 writeToFile:jpegFilePath atomically:YES];
 }
 
+//Main function which analyzes posters
 -(IBAction)analyze:(id)sender{
 //    UIImage* olo = [UIImage imageNamed:@"image_sample.jpg"];
 /*   if ([self imageFunc:nnewImage  isEqualTo:[UIImage imageNamed:@"image_sample.jpg"]])
@@ -90,8 +89,8 @@
 //    if ([self imageFunc:nnewImage  isEqualTo:oloImage])
 //        NSLog(@"RABOTAET");
 //    UIImage *imageToDisplay =[UIImage imageWithCGImage:[nnewImage CGImage] scale:1.0 orientation: UIImageOrientationUp];
-    [tesseract setImage:[UIImage imageNamed:@"image_sample.jpg"]];
-    imageView.image = [UIImage imageNamed:@"image_sample.jpg"];
+    [tesseract setImage:nnewImage];
+    imageView.image = nnewImage;
 //    [tesseract setImage:nnewImage];
     [tesseract recognize];
      NSLog(@"%@", [tesseract recognizedText]);
@@ -149,8 +148,8 @@
     
 }
 
-// Writing something to txt file
 
+// Writing something to txt file
 -(void) writeResultToFile:(NSString *)str
 {
     NSString* filePath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
@@ -163,8 +162,8 @@
     [[str dataUsingEncoding:NSUTF8StringEncoding] writeToFile:fileAtPath atomically:NO];
 }
 
-//Function for writing event to calendar.
 
+//Function for writing event to calendar.
 -(IBAction)calendarOlo:(id)sender{
     store = [[EKEventStore alloc] init];
     if ([store respondsToSelector:@selector(requestAccessToEntityType:completion:)])
@@ -225,11 +224,12 @@
 }
 
 
-//Function for taking Date from recognized text. Writes montg to variable monthName and day to dayName one. !! Isn't used anywhere still !!
-
+//Function for taking Date from recognized text. Writes month to variable monthName and day to dayName one.
 -(void)takeDateFromTxt: (NSString*) str
 {
+    //case if we have date in format November, 15th
     monthArray = @[@"Jan", @"Feb", @"Mar", @"Apr", @"May", @"Jun", @"Jul", @"Aug", @"Sept", @"Oct", @"Nov", @"Dec"];
+    dayName = -1;
     NSArray* foo = [str componentsSeparatedByString: @" "];
     for (NSString * str1 in foo)
     {
@@ -271,11 +271,64 @@
                 [scanner scanUpToCharactersFromSet:numbers intoString:NULL];
                 [scanner scanCharactersFromSet:numbers intoString:&numberString];
                 dayName = [numberString integerValue];
+                
+                if (dayName != -1)
+                    goto endoffunc;
             }
         }
     }
+    if (dayName == -1)
+    {
+        for (NSString* str1 in foo)
+        {
+            NSString *numberString;
+            int ololtemp;
+            NSScanner *scannerStrWithDots = [NSScanner scannerWithString:str1];
+            NSCharacterSet *numbersRes = [NSCharacterSet characterSetWithCharactersInString:@"0123456789./"];
+            [scannerStrWithDots scanUpToCharactersFromSet:numbersRes intoString:NULL];
+            [scannerStrWithDots scanCharactersFromSet:numbersRes intoString:&numberString];
+            if (numberString!=NULL)
+            {
+                ololtemp = [numberString integerValue];
+                if (ololtemp > 0 && ololtemp<13)
+                {
+                    if ([numberString rangeOfString:@"."].location != NSNotFound)
+                    {
+                        NSArray* divByDots = [[NSArray alloc] init];
+                        divByDots = [numberString componentsSeparatedByString: @"."];
+                        if ([divByDots count] == 2 || [divByDots count] == 3)
+                        {
+                            if([divByDots[0] integerValue] > 0 && [divByDots[0] integerValue] < 13 && [divByDots[1] integerValue] > 0 && [divByDots[1] integerValue] < 32)
+                            {
+                                monthName = divByDots[0];
+                                dayName = [divByDots[1] integerValue];
+                                goto endoffunc;
+                            }
+                        }
+                    }
+                    else if ([numberString rangeOfString:@"/"].location != NSNotFound)
+                    {
+                        NSArray* divBySlash = [[NSArray alloc] init];
+                        divBySlash = [numberString componentsSeparatedByString: @"/"];
+                        if ([divBySlash count] == 2 || [divBySlash count] == 3)
+                        {
+                            if([divBySlash[0] integerValue] > 0 && [divBySlash[0] integerValue] < 13 && [divBySlash[1] integerValue] > 0 && [divBySlash[1] integerValue] < 32)
+                            {
+                                monthName = divBySlash[0];
+                                dayName = [divBySlash[1] integerValue];
+                                goto endoffunc;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+endoffunc:
+    NSLog(@"%@%d", monthName, dayName);
 }
 
+//Function for taking Time from txt - writes it to array hoursAM
 -(void)takeTimeFromTxt: (NSString*) str
 {
     hoursAm = [[NSMutableArray alloc] initWithCapacity:30];
@@ -337,11 +390,10 @@
             }
         }
     }
-    NSLog(@"%@", hoursAm[0]);
+//    NSLog(@"%@", hoursAm[0]);
 }
 
-
-
+//finds Title from th text. Takes two posters - original and resized
 - (void)findTitle:(NSString*)original :(NSString*)resized
 {
     NSUInteger numberOfEl;
@@ -381,8 +433,6 @@
     titlestring = [NSString stringWithFormat:@"%@%@%@%@%@", originalArr[t], @" ", originalArr[t+1], @" ", originalArr[t+2]];
     NSLog(@"%@%@%@%@%@", originalArr[t], @" ", originalArr[t+1], @" ", originalArr[t+2]);
 }
-
-
 
 - (void)viewDidLoad
 {
